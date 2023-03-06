@@ -1,15 +1,12 @@
 <script script lang="ts">
-import { RouterLink, RouterView } from "vue-router";
-
 export default {
     data() {
         return {};
     },
+    name: "landing",
 };
 </script>
 
-<template>
-    <router-view />
-</template>
+<template>lading page</template>
 
 <style lang="scss" scoped></style>
