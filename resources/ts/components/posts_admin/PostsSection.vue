@@ -1,159 +1,137 @@
 <script script lang="ts">
 import axios from "axios";
-import User from "../../types/User";
+import Post from "../../types/Post";
 import DeleteMode from "../DeleteMode.vue";
-import UserForm from "./UserForm.vue";
+import PostsForm from "./PostsForm.vue";
 
 export default {
     data() {
         return {
-            response: "",
-            users: [] as User[],
-            user: {
+            posts: [] as Post[],
+            post: {
                 id: 0,
-                name: "",
-                password: "",
-                password2: "",
-            } as User,
+                title: "",
+                text: "",
+                img: "",
+                created_at: "",
+                updated_at: "",
+            } as Post,
             error: "",
-            validationError: "",
-            editMode: false,
+            response: "",
             deleteMode: false,
+            editMode: false,
             isEdit: false,
+            validationError: "",
         };
     },
-    name: "user-section",
-    components: { DeleteMode, UserForm },
+    name: "posts-section",
+    components: { DeleteMode, PostsForm },
     methods: {
-        async fetchUsers() {
+        async fetchPosts() {
             await axios({
                 method: "get",
-                url: "/api/users",
+                url: "/api/news",
             })
                 .then((res) => {
-                    this.users = res.data;
+                    this.posts = res.data;
                 })
                 .catch((err) => {
                     console.log(err.message);
                     this.error = err.message;
                 });
         },
-        async deleteUser(id: number) {
+        async deletePost(id: number) {
             await axios
-                .delete(`/api/users/${id}`)
+                .delete(`/api/news/${id}`)
                 .then((res) => {
                     this.response = res.data.message;
                     this.deleteMode = false;
-                    this.fetchUsers();
+                    this.fetchPosts();
                 })
                 .catch((err) => {
                     console.log(err.message);
                     this.error = err.message;
                 });
         },
-        async submitUser() {
+        async submitPosts() {
             if (!this.isEdit) {
-                if (this.formValidation()) {
+                if (this.post.title && this.post.text) {
+                    console.log(this.post);
                     await axios({
                         method: "post",
                         headers: {
                             "Content-Type": "application/x-www-form-urlencoded",
                         },
-                        url: "/api/users/",
-                        data: this.user,
+                        url: "/api/news/",
+                        data: this.post,
                     })
                         .then((res) => {
                             this.response = res.data.message;
                             this.editMode = false;
-                            this.fetchUsers();
-                        })
-                        .catch((err) => {
-                            console.log(err.message);
-                            this.error = err.message;
-                        });
-                }
-            }
 
-            if (this.isEdit) {
-                if (this.user.name) {
-                    await axios({
-                        method: "put",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        url: `/api/users/${this.user.id}`,
-                        data: this.user,
-                    })
-                        .then((res) => {
-                            this.response = res.data.message;
-                            this.editMode = false;
-                            this.fetchUsers();
+                            this.fetchPosts();
                         })
                         .catch((err) => {
                             console.log(err.message);
                             this.error = err.message;
                         });
                 } else {
-                    this.validationError =
-                        "Należy uzupełnić nazwę użytkownika.";
+                    this.validationError = "Należy uzupełnić wszystkie pola.";
+                }
+            }
+
+            if (this.isEdit) {
+                if (this.post.title && this.post.text) {
+                    await axios({
+                        method: "put",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        url: `/api/news/${this.post.id}`,
+                        data: this.post,
+                    })
+                        .then((res) => {
+                            this.response = res.data.message;
+                            this.editMode = false;
+                            console.log(res);
+                            this.fetchPosts();
+                            this.isEdit = false;
+                        })
+                        .catch((err) => {
+                            console.log(err.message);
+                            this.error = err.message;
+                        });
+                } else {
+                    this.validationError = "Należy uzupełnić wszystkie pola.";
                 }
             }
         },
-        formValidation() {
-            this.user.name = this.user.name.trim();
-            if (this.user.password && this.user.password2) {
-                this.user.password = this.user.password.trim();
-                this.user.password2 = this.user.password2.trim();
-            }
-
-            if (
-                !this.user.name ||
-                !this.user.password ||
-                !this.user.password2
-            ) {
-                this.validationError = "Należy uzupełnić wszystkie pola.";
-                return false;
-            }
-
-            if (this.user.password != this.user.password2) {
-                this.validationError = "Hasła powinny być takie same.";
-                return false;
-            }
-
-            if (
-                !this.user.password.match(
-                    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/
-                )
-            ) {
-                this.validationError =
-                    "Hasło powinno składać się z co najmniej 6 znaków, jednej litery i jednej cyfry.";
-                return false;
-            }
-
-            return true;
-        },
         openDeleteMode(id: number) {
             this.deleteMode = true;
-            this.user.id = id;
+            this.post.id = id;
         },
-        openEditMode(user?: User) {
+        openEditMode(post?: Post) {
             this.clearFrom();
             this.editMode = true;
 
-            if (user) {
+            if (post) {
                 this.isEdit = true;
-                this.user.id = user.id;
-                this.user.name = user.name;
+                this.post.id = post.id;
+                this.post.title = post.title;
+                this.post.text = post.text;
+                this.post.img = post.img;
+                this.post.created_at = post.created_at;
             }
         },
         clearFrom() {
-            this.user.name = "";
-            this.user.password = "";
-            this.user.password2 = "";
+            this.post.title = "";
+            this.post.text = "";
+            this.post.img = "";
+            this.post.created_at = "";
         },
     },
     async created() {
-        await this.fetchUsers();
+        await this.fetchPosts();
     },
     watch: {
         response() {
@@ -171,29 +149,31 @@ export default {
 </script>
 
 <template>
-    <section :class="deleteMode == true || editMode == true ? 'disable' : ''">
+    <section>
         <div class="action">
-            <h2>Użytkownicy</h2>
+            <h2>Wpisy</h2>
             <p class="response">{{ response }}</p>
-            <button @click="openEditMode()">Dodaj użytkownika</button>
+            <button @click="openEditMode()">Dodaj wpis</button>
         </div>
         <table>
             <tr>
-                <th>Nazwa</th>
+                <th>Wpis</th>
+                <th>Stworzono</th>
                 <th>Akcje</th>
             </tr>
-            <tr v-for="user in users" :key="user.id">
-                <td>{{ user.name }}</td>
+            <tr v-for="post in posts" :key="post.id">
+                <td>{{ post.title }}</td>
+                <td>{{ post.created_at.substring(0, 10) }}</td>
                 <td>
                     <font-awesome-icon
                         class="icon"
                         icon="fa-solid fa-pen-to-square"
-                        @click="openEditMode(user)"
+                        @click="openEditMode(post)"
                     />
                     <font-awesome-icon
                         class="icon"
                         icon="fa-solid fa-trash"
-                        @click="openDeleteMode(user.id)"
+                        @click="openDeleteMode(post.id)"
                     />
                 </td>
             </tr>
@@ -202,26 +182,24 @@ export default {
     <delete-mode
         v-if="deleteMode == true"
         :text="'użytkownika'"
-        :delete-object="() => deleteUser(user.id)"
+        :delete-object="() => deletePost(post.id)"
         @close-delete-mode="() => (deleteMode = false)"
     />
-    <user-form
+    <posts-form
         v-if="editMode == true"
-        :object="user"
+        :object="post"
         :error="validationError"
-        :on-object="() => submitUser()"
-        :text="
-            isEdit == true
-                ? [
-                      'Edytuj',
-                      'Zostaw puste pole, jeśli nie chcesz zmieniać hasła.',
-                  ]
-                : ['Dodaj']
-        "
+        :on-object="() => submitPosts()"
+        :text="isEdit == true ? 'Edytuj' : 'Dodaj'"
         @close-edit-mode="
             () => {
                 editMode = false;
                 isEdit = false;
+            }
+        "
+        @on-file-selected="
+            (img) => {
+                post.img = img;
             }
         "
     />
@@ -251,7 +229,7 @@ section {
     table,
     th,
     td {
-        width: 400px;
+        width: 800px;
         text-align: center;
         border: 1px solid;
         border-collapse: collapse;

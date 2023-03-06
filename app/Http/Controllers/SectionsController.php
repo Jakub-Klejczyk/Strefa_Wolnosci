@@ -4,38 +4,39 @@ namespace App\Http\Controllers;
 
 use App\Models\Sections;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use App\Http\Resources\SectionsCollection;
+use App\Http\Requests\SectionCreateRequest;
+use App\Http\Requests\SectionUpdateRequest;
 
 class SectionsController extends Controller
 {
-    public function index() {
-        $sections = Sections::all(['id','section','text']);
-        return response()->json($sections);
+    public function index()
+    {
+        $sections = new SectionsCollection(Sections::all());
+        return response($sections);
     }
 
-    public function store(Request $request)
+    public function store(SectionCreateRequest $request)
     {
-        $section = Sections::create($request->post());
-        return response()->json([
-            'message'=>'Dodano nową sekcję!',
-            'section'=>$section
-        ]);
+        Sections::create($request->validate($request->rules()));
+        
+        return ['message'=>'Dodano nową sekcję!'];
     }
 
-    public function update(Request $request, Sections $section)
+    public function update(SectionUpdateRequest $request, Sections $section, JsonResponse $json)
     {
-        $section->fill($request->post())->save();
-        return response()->json([
-            'message'=>'Zaktualizowano sekcję!',
-            'section'=>$section
-        ]);
+        $section->update($request->validate($request->rules()));
+        return ['message'=>'Zaktualizowano sekcję!', $json->content() ];
+        
     }
 
     public function destroy(Sections $section)
     {
         $section->delete();
-        return response()->json([
+        return [
             'message'=>'Usunięto sekcję!'
-        ]);
+        ];
     }
 
 }

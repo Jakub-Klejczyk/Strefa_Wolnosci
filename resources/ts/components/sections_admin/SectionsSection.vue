@@ -1,159 +1,126 @@
 <script script lang="ts">
 import axios from "axios";
-import User from "../../types/User";
+import Section from "../../types/Section";
 import DeleteMode from "../DeleteMode.vue";
-import UserForm from "./UserForm.vue";
+import SectionsForm from "./SectionsForm.vue";
 
 export default {
     data() {
         return {
-            response: "",
-            users: [] as User[],
-            user: {
+            sections: [] as Section[],
+            section: {
                 id: 0,
-                name: "",
-                password: "",
-                password2: "",
-            } as User,
+                section: "",
+                text: "",
+            } as Section,
             error: "",
-            validationError: "",
-            editMode: false,
+            response: "",
             deleteMode: false,
+            editMode: false,
             isEdit: false,
+            validationError: "",
         };
     },
-    name: "user-section",
-    components: { DeleteMode, UserForm },
+    name: "sections-section",
+    components: { DeleteMode, SectionsForm },
     methods: {
-        async fetchUsers() {
+        async fetchSections() {
             await axios({
                 method: "get",
-                url: "/api/users",
+                url: "/api/sections",
             })
                 .then((res) => {
-                    this.users = res.data;
+                    this.sections = res.data;
                 })
                 .catch((err) => {
                     console.log(err.message);
                     this.error = err.message;
                 });
         },
-        async deleteUser(id: number) {
+        async deleteSection(id: number) {
             await axios
-                .delete(`/api/users/${id}`)
+                .delete(`/api/sections/${id}`)
                 .then((res) => {
                     this.response = res.data.message;
                     this.deleteMode = false;
-                    this.fetchUsers();
+                    this.fetchSections();
                 })
                 .catch((err) => {
                     console.log(err.message);
                     this.error = err.message;
                 });
         },
-        async submitUser() {
+        async submitSection() {
             if (!this.isEdit) {
-                if (this.formValidation()) {
+                if (this.section.section && this.section.text) {
                     await axios({
                         method: "post",
                         headers: {
                             "Content-Type": "application/x-www-form-urlencoded",
                         },
-                        url: "/api/users/",
-                        data: this.user,
+                        url: "/api/sections/",
+                        data: this.section,
                     })
                         .then((res) => {
                             this.response = res.data.message;
                             this.editMode = false;
-                            this.fetchUsers();
-                        })
-                        .catch((err) => {
-                            console.log(err.message);
-                            this.error = err.message;
-                        });
-                }
-            }
-
-            if (this.isEdit) {
-                if (this.user.name) {
-                    await axios({
-                        method: "put",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        url: `/api/users/${this.user.id}`,
-                        data: this.user,
-                    })
-                        .then((res) => {
-                            this.response = res.data.message;
-                            this.editMode = false;
-                            this.fetchUsers();
+                            this.fetchSections();
                         })
                         .catch((err) => {
                             console.log(err.message);
                             this.error = err.message;
                         });
                 } else {
-                    this.validationError =
-                        "Należy uzupełnić nazwę użytkownika.";
+                    this.validationError = "Należy uzupełnić wszystkie pola.";
+                }
+            }
+
+            if (this.isEdit) {
+                if (this.section.section && this.section.text) {
+                    await axios({
+                        method: "put",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                        url: `/api/sections/${this.section.id}`,
+                        data: this.section,
+                    })
+                        .then((res) => {
+                            this.response = res.data.message;
+                            this.editMode = false;
+                            this.fetchSections();
+                        })
+                        .catch((err) => {
+                            console.log(err.message);
+                            this.error = err.message;
+                        });
+                } else {
+                    this.validationError = "Należy uzupełnić wszystkie pola.";
                 }
             }
         },
-        formValidation() {
-            this.user.name = this.user.name.trim();
-            if (this.user.password && this.user.password2) {
-                this.user.password = this.user.password.trim();
-                this.user.password2 = this.user.password2.trim();
-            }
-
-            if (
-                !this.user.name ||
-                !this.user.password ||
-                !this.user.password2
-            ) {
-                this.validationError = "Należy uzupełnić wszystkie pola.";
-                return false;
-            }
-
-            if (this.user.password != this.user.password2) {
-                this.validationError = "Hasła powinny być takie same.";
-                return false;
-            }
-
-            if (
-                !this.user.password.match(
-                    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/
-                )
-            ) {
-                this.validationError =
-                    "Hasło powinno składać się z co najmniej 6 znaków, jednej litery i jednej cyfry.";
-                return false;
-            }
-
-            return true;
-        },
         openDeleteMode(id: number) {
             this.deleteMode = true;
-            this.user.id = id;
+            this.section.id = id;
         },
-        openEditMode(user?: User) {
+        openEditMode(section?: Section) {
             this.clearFrom();
             this.editMode = true;
 
-            if (user) {
+            if (section) {
                 this.isEdit = true;
-                this.user.id = user.id;
-                this.user.name = user.name;
+                this.section.id = section.id;
+                this.section.section = section.section;
+                this.section.text = section.text;
             }
         },
         clearFrom() {
-            this.user.name = "";
-            this.user.password = "";
-            this.user.password2 = "";
+            this.section.section = "";
+            this.section.text = "";
         },
     },
     async created() {
-        await this.fetchUsers();
+        await this.fetchSections();
     },
     watch: {
         response() {
@@ -171,29 +138,29 @@ export default {
 </script>
 
 <template>
-    <section :class="deleteMode == true || editMode == true ? 'disable' : ''">
+    <section>
         <div class="action">
-            <h2>Użytkownicy</h2>
+            <h2>Sekcje</h2>
             <p class="response">{{ response }}</p>
-            <button @click="openEditMode()">Dodaj użytkownika</button>
+            <button @click="openEditMode()">Dodaj sekcje</button>
         </div>
         <table>
             <tr>
-                <th>Nazwa</th>
+                <th>Sekcja</th>
                 <th>Akcje</th>
             </tr>
-            <tr v-for="user in users" :key="user.id">
-                <td>{{ user.name }}</td>
+            <tr v-for="section in sections" :key="section.id">
+                <td>{{ section.section }}</td>
                 <td>
                     <font-awesome-icon
                         class="icon"
                         icon="fa-solid fa-pen-to-square"
-                        @click="openEditMode(user)"
+                        @click="openEditMode(section)"
                     />
                     <font-awesome-icon
                         class="icon"
                         icon="fa-solid fa-trash"
-                        @click="openDeleteMode(user.id)"
+                        @click="openDeleteMode(section.id)"
                     />
                 </td>
             </tr>
@@ -202,22 +169,15 @@ export default {
     <delete-mode
         v-if="deleteMode == true"
         :text="'użytkownika'"
-        :delete-object="() => deleteUser(user.id)"
+        :delete-object="() => deleteSection(section.id)"
         @close-delete-mode="() => (deleteMode = false)"
     />
-    <user-form
+    <sections-form
         v-if="editMode == true"
-        :object="user"
+        :object="section"
         :error="validationError"
-        :on-object="() => submitUser()"
-        :text="
-            isEdit == true
-                ? [
-                      'Edytuj',
-                      'Zostaw puste pole, jeśli nie chcesz zmieniać hasła.',
-                  ]
-                : ['Dodaj']
-        "
+        :on-object="() => submitSection()"
+        :text="isEdit == true ? 'Edytuj' : 'Dodaj'"
         @close-edit-mode="
             () => {
                 editMode = false;

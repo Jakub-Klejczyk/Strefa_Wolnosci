@@ -4,58 +4,47 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Resources\UserCollection;
+use App\Http\Requests\UserCreateRequest;
+use App\Http\Requests\UserUpdateRequest;
 
 class UserController extends Controller
 {
-    public function index() {
-        $user = User::all(['id','name']);
-        return response()->json($user);
+    public function index()
+    {
+        $user = new UserCollection(User::all());
+        return response($user);
     }
 
-    public function store(Request $request)
+    public function store(UserCreateRequest $request)
     {
-        $formFields = $request->validate([
-            'name' => 'required',
-            'password' => 'required|min:6'
-        ]);
 
-        $formFields['password'] = bcrypt($formFields['password']);
+        $request['password'] = bcrypt($request['password']);
 
-        $user = User::create($formFields);
+        User::create($request->validate($request->rules()));
 
-        return response()->json([
-            'message'=>'Dodano użytkownika!'
-        ]);
+        return ['message'=>'Dodano użytkownika!'];
     }
 
 
-    public function update(Request $request, User $user)
+    public function update(UserUpdateRequest $request, User $user)
     {
+        $request['password'] = bcrypt($request['password']);
 
-        $formFields = $request->validate([
-            'name' => 'required',
-            'password' => 'nullable'
-        ]);
+        $user->update($request->validate($request->rules()));
 
-        $formFields['password'] = bcrypt($formFields['password']);
-
-        //check if its work
-        $user->update($formFields);
-
-        return response()->json([
-            'message'=>'Zaktualizowano użytkownika!'
-        ]);
+        return ['message'=>'Zaktualizowano użytkownika!'];
     }
 
     public function destroy(User $user)
     {
         $user->delete();
-        return response()->json([
-            'message'=>'Usunięto użytkownika!'
-        ]);
+        return ['message'=>'Usunięto użytkownika!'];
     }
 
-    public function authenticate(Request $request) {
+    //dodać customowe request do log in i log out(?) przy tworzeniu strony logowania
+    public function authenticate(Request $request)
+    {
         $formFields = $request->validate([
             'name' => 'required',
             'password' => 'required'
@@ -70,7 +59,8 @@ class UserController extends Controller
         return back()->withErrors(['message' => 'Niepoprawne dane logowania.']);
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         auth()->logout();
 
         $request->session()->invalidate();

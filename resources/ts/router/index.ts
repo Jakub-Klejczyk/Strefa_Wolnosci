@@ -1,21 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
-import LandingView from "../views/LandingView.vue";
-import AdminPanelView from "../views/AdminPanelView.vue";
+import routes from "./routes";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-    routes: [
-        {
-            path: "/",
-            name: "landing",
-            component: LandingView,
-        },
-        {
-            path: "/admin",
-            name: "admin",
-            component: AdminPanelView,
-        },
-    ],
+    routes: routes,
 });
 
 export default router;
